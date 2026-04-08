@@ -65,7 +65,7 @@ public class PagamentoService {
 
     @Transactional
 
-    public void delete(Long id){
+    public void deletePagamentoById(Long id){
 
         if (!pagamentoRepository.existsById(id)){
             throw new ResourceNotFoundException("Recurso não encontrado. ID: " + id);
