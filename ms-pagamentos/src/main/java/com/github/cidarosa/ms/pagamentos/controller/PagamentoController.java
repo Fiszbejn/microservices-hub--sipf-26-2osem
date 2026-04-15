@@ -37,7 +37,7 @@ public class PagamentoController {
     @PostMapping
     public ResponseEntity<PagamentoDTO> savePagamento(@RequestBody @Valid PagamentoDTO pagamentoDTO){
 
-        pagamentoDTO = pagamentoService.save(pagamentoDTO);
+        pagamentoDTO = pagamentoService.savePagamento(pagamentoDTO);
 
         URI uri = ServletUriComponentsBuilder
                 .fromCurrentRequestUri()

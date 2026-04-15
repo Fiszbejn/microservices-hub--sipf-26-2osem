@@ -39,7 +39,7 @@ public class PagamentoService {
     }
 
     @Transactional
-    public PagamentoDTO save(PagamentoDTO pagamentoDTO){
+    public PagamentoDTO savePagamento(PagamentoDTO pagamentoDTO){
 
         Pagamento pagamento = new Pagamento();
         mapDtoToPagamento(pagamentoDTO, pagamento);
