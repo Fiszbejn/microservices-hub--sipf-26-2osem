@@ -37,7 +37,7 @@ public class PagamentoController {
     @PostMapping
     public ResponseEntity<PagamentoDTO> savePagamento(@RequestBody @Valid PagamentoDTO pagamentoDTO){
 
-        pagamentoDTO = pagamentoService.save(pagamentoDTO);
+        pagamentoDTO = pagamentoService.savePagamento(pagamentoDTO);
 
         URI uri = ServletUriComponentsBuilder
                 .fromCurrentRequestUri()
@@ -60,7 +60,7 @@ public class PagamentoController {
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deletePagamento(@PathVariable Long id){
 
-        pagamentoService.delete(id);
+        pagamentoService.deletePagamentoById(id);
 
         return ResponseEntity.noContent().build();
     }

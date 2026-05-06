@@ -39,7 +39,7 @@ public class PagamentoService {
     }
 
     @Transactional
-    public PagamentoDTO save(PagamentoDTO pagamentoDTO){
+    public PagamentoDTO savePagamento(PagamentoDTO pagamentoDTO){
 
         Pagamento pagamento = new Pagamento();
         mapDtoToPagamento(pagamentoDTO, pagamento);
@@ -65,7 +65,7 @@ public class PagamentoService {
 
     @Transactional
 
-    public void delete(Long id){
+    public void deletePagamentoById(Long id){
 
         if (!pagamentoRepository.existsById(id)){
             throw new ResourceNotFoundException("Recurso não encontrado. ID: " + id);
