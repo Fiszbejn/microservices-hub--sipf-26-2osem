@@ -1,8 +1,10 @@
 package com.github.cidarosa.ms.pagamentos.service;
 
+import com.github.cidarosa.ms.pagamentos.client.PedidoClient;
 import com.github.cidarosa.ms.pagamentos.dto.PagamentoDTO;
 import com.github.cidarosa.ms.pagamentos.entities.Pagamento;
 import com.github.cidarosa.ms.pagamentos.entities.Status;
+import com.github.cidarosa.ms.pagamentos.exceptions.PagamentoAprovadoException;
 import com.github.cidarosa.ms.pagamentos.exceptions.ResourceNotFoundException;
 import com.github.cidarosa.ms.pagamentos.repository.PagamentoRepository;
 import jakarta.persistence.EntityNotFoundException;
@@ -18,8 +20,11 @@ public class PagamentoService {
     @Autowired
     private PagamentoRepository pagamentoRepository;
 
+    @Autowired
+    private PedidoClient pedidoClient;
+
     @Transactional(readOnly = true)
-    public List<PagamentoDTO> findAllPagamentos(){
+    public List<PagamentoDTO> findAllPagamentos() {
 
         List<Pagamento> pagamentos = pagamentoRepository.findAll();
 
@@ -29,7 +34,7 @@ public class PagamentoService {
     }
 
     @Transactional(readOnly = true)
-    public PagamentoDTO findPagamentoById(Long id){
+    public PagamentoDTO findPagamentoById(Long id) {
 
         Pagamento pagamento = pagamentoRepository.findById(id).orElseThrow(
                 () -> new ResourceNotFoundException("Recurso não encontrado. ID: " + id)
@@ -39,7 +44,7 @@ public class PagamentoService {
     }
 
     @Transactional
-    public PagamentoDTO savePagamento(PagamentoDTO pagamentoDTO){
+    public PagamentoDTO savePagamento(PagamentoDTO pagamentoDTO) {
 
         Pagamento pagamento = new Pagamento();
         mapDtoToPagamento(pagamentoDTO, pagamento);
@@ -50,10 +55,17 @@ public class PagamentoService {
     }
 
     @Transactional
-    public PagamentoDTO update(Long id, PagamentoDTO pagamentoDTO){
+    public PagamentoDTO update(Long id, PagamentoDTO pagamentoDTO) {
 
         try {
             Pagamento pagamento = pagamentoRepository.getReferenceById(id);
+
+            if (pagamento.getStatus().equals(Status.APROVADO)){
+                throw new PagamentoAprovadoException(
+                        String.format("Pagamento id %d já está aprovado e não pode ser alterado.", id)
+                );
+            }
+
             mapDtoToPagamento(pagamentoDTO, pagamento);
             pagamento.setStatus(pagamentoDTO.getStatus());
             pagamento = pagamentoRepository.save(pagamento);
@@ -65,13 +77,26 @@ public class PagamentoService {
 
     @Transactional
 
-    public void deletePagamentoById(Long id){
+    public void deletePagamentoById(Long id) {
 
-        if (!pagamentoRepository.existsById(id)){
+        if (!pagamentoRepository.existsById(id)) {
             throw new ResourceNotFoundException("Recurso não encontrado. ID: " + id);
         }
 
         pagamentoRepository.deleteById(id);
+    }
+
+    @Transactional
+    public PagamentoDTO confirmarPagamentoDoPedido(Long id) {
+
+        Pagamento pagamento = pagamentoRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Pagamento não encontrado. ID: " + id)
+                );
+
+        pagamento.setStatus(Status.APROVADO);
+        pagamentoRepository.save(pagamento);
+        pedidoClient.confirmarPagamento(pagamento.getPedidoId());
+        return new PagamentoDTO(pagamento);
     }
 
     private void mapDtoToPagamento(PagamentoDTO pagamentoDTO, Pagamento pagamento) {
