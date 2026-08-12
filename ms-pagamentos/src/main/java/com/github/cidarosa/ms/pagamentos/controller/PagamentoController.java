@@ -2,8 +2,10 @@ package com.github.cidarosa.ms.pagamentos.controller;
 
 import com.github.cidarosa.ms.pagamentos.dto.PagamentoDTO;
 import com.github.cidarosa.ms.pagamentos.service.PagamentoService;
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +14,7 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import java.net.URI;
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/pagamentos")
 public class PagamentoController {
@@ -67,11 +70,20 @@ public class PagamentoController {
     }
 
     @PatchMapping("/{id}/confirmar")
+    @CircuitBreaker(name = "atualizarPedido", fallbackMethod = "fallbackConfirmarPagamentoPendente")
     public ResponseEntity<PagamentoDTO> confirmarPagamentoDoPedido(@PathVariable @NotNull Long id){
 
         PagamentoDTO dto = pagamentoService.confirmarPagamentoDoPedido(id);
 
         return ResponseEntity.ok(dto);
+    }
+
+    public ResponseEntity<PagamentoDTO> fallbackConfirmarPagamentoPendente(Long id, Throwable e) {
+
+        log.error("Falha ao confirmar pedido {}. Ativando fallback. Erro: {}", id, e.getMessage());
+        PagamentoDTO dto = pagamentoService.alterarStatusDoPagamento(id);
+
+        return ResponseEntity.status(503).body(dto);
     }
 
 }
